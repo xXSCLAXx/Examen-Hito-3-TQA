@@ -3,7 +3,7 @@
 Aplicación: https://www.saucedemo.com/ · Fecha de ejecución: 20/10/2026 · Tester: Sebastián Ariel Camacho Loayza
 
 Plantilla: *Casos de prueba, plantilla para diseño y ejecución* (TQA). Versión con la plantilla original en `casos_caja_negra.docx`.
-PASS = coincide; FAIL = diferencia verificable.
+PASS = coincide; FAIL = diferencia verificable. TC-006 y TC-007 son casos adicionales a los 5 solicitados.
 
 | ID | Caso | Estado | Defecto |
 |---|---|---|---|
@@ -12,6 +12,8 @@ PASS = coincide; FAIL = diferencia verificable.
 | TC-003 | Agregar productos al carrito | PASS | — |
 | TC-004 | Eliminar un producto del carrito | PASS | — |
 | TC-005 | Validación de campos obligatorios en el checkout | PASS | — |
+| TC-006 | Gestión del carrito desde el catálogo con problem_user (adicional) | FAIL | BUG-02-UI, BUG-03-F, BUG-04-F, BUG-06-F |
+| TC-007 | Checkout con datos válidos con problem_user (adicional) | FAIL | BUG-05-F |
 
 ---
 
@@ -395,4 +397,172 @@ PASS = coincide; FAIL = diferencia verificable.
 **5. Si el resultado es FAIL**: N/A. El resultado fue PASS. Referencia del defecto: N/A
 
 **6. Observaciones de ejecución**: No se presionó Finish: la compra no se confirmó.
+
+
+---
+
+## TC-006 · Gestión del carrito desde el catálogo con problem_user (adicional)
+
+### Parte 1 · Diseño del caso de prueba
+
+| ID del TC | Título | Prioridad | Tipo | Módulo | Ambiente |
+|---|---|---|---|---|---|
+| TC-006 | Gestión del carrito desde el catálogo con problem_user (adicional) | Alta | Funcional (exploratoria) | Catálogo y carrito | Demo público (saucedemo.com), Chrome 155 / Windows |
+
+**1. Objetivo (¿Qué se quiere validar?)**: Que un usuario nuevo (problem_user) vea el catálogo con las imágenes de cada producto, un carrito vacío, y pueda agregar y quitar productos desde el catálogo.
+
+**2. Precondiciones**
+
+| Estado inicial | Sesión cerrada del usuario anterior; pantalla de login. Se espera un carrito vacío para el usuario nuevo. |
+|---|---|
+| Usuario / permisos | problem_user (usuario de demostración con fallos intencionales). |
+| Configuración | Google Chrome 155 en Windows. Ordenamiento por defecto: Name (A to Z). |
+
+**3. Datos de prueba**
+
+| Dato | Usuario / Contraseña / Productos |
+|---|---|
+| Valor | problem_user / secret_sauce. Los 6 productos del catálogo |
+| Origen | Usuarios de demostración publicados en la página de login |
+| Observación | Caso adicional a los 5 solicitados, para explorar defectos. |
+
+**4. Pasos y resultados esperados**
+
+| # | Paso / acción | Dato utilizado | Resultado esperado |
+|---|---|---|---|
+| 1 | Iniciar sesión como problem_user | problem_user / secret_sauce | Se muestra el catálogo con el carrito vacío. |
+| 2 | Revisar la imagen de cada uno de los 6 productos | — | Cada producto muestra su propia imagen. |
+| 3 | Hacer clic en Add to cart de Bike Light, Bolt T-Shirt y Fleece Jacket | 3 productos | Los 3 botones cambian a Remove y el contador muestra 4. |
+| 4 | Repetir Add to cart en Bolt T-Shirt y Fleece Jacket, y probar Onesie y Test.allTheThings() T-Shirt (Red) | 4 productos | Cada botón cambia a Remove. |
+| 5 | Hacer clic en Remove de Backpack, Bike Light y Onesie desde el catálogo | 3 productos | Cada botón vuelve a Add to cart y el contador baja a 0. |
+| 6 | Abrir el carrito y hacer clic en Remove del Backpack | Sauce Labs Backpack | El producto se elimina y el contador baja. |
+
+**5. Resultado esperado final (criterio de éxito)**: El catálogo muestra las imágenes correctas, agregar y quitar productos funciona en todos los productos y el carrito del usuario nuevo comienza vacío.
+
+### Parte 2 · Ejecución de la prueba
+
+| ID del TC | Ejecutado por | Fecha | Hora | Ambiente | Versión |
+|---|---|---|---|---|---|
+| TC-006 | Sebastián Ariel Camacho Loayza | 20/10/2026 | 21:18 | Demo público (saucedemo.com), Chrome 155 / Windows | Sin versión visible (sitio de demostración) |
+
+**1. Resultado de la ejecución**: **FAIL**
+
+**2. Resultado observado**: Se accedió al catálogo, pero el carrito ya traía el Backpack del usuario anterior (contador 1). Los 6 productos muestran la misma foto de un perro. Add to cart no respondió en Bolt T-Shirt, Fleece Jacket ni Test.allTheThings() T-Shirt (Red); sí funcionó en Bike Light y Onesie. Remove no respondió en el catálogo en ninguno de los 3 productos probados (el contador siguió en 3). Dentro del carrito, Remove sí funcionó.
+
+**Comparación**: No coincide. Se encontraron 4 desviaciones: carrito heredado, imágenes repetidas, Add to cart sin respuesta en 3 de 6 productos y Remove sin respuesta en el catálogo.
+
+**3. Registro de ejecución por paso**
+
+| # | Paso ejecutado | Resultado observado | Estado | Observación |
+|---|---|---|---|---|
+| 1 | Iniciar sesión | Catálogo visible, pero el carrito ya tenía 1 producto | FAIL | BUG-06-F. Ver captura 01. |
+| 2 | Revisar imágenes | Los 6 productos muestran la misma foto de un perro | FAIL | BUG-02-UI. Ver captura 01. |
+| 3 | Add to cart en 3 productos | Solo Bike Light cambió; Bolt y Fleece sin cambio | FAIL | BUG-03-F. Ver captura 02. |
+| 4 | Repetir Add to cart y probar otros | Onesie cambió; Bolt, Fleece y Red no responden | FAIL | BUG-03-F. Ver captura 03. |
+| 5 | Remove desde el catálogo | Ningún botón respondió; contador sigue en 3 | FAIL | BUG-04-F. Ver captura 04. |
+| 6 | Remove desde el carrito | El Backpack se eliminó; contador 2 | PASS | Ver capturas 05 y 06. |
+
+**4. Evidencia**
+
+- `evidencia_TC006_01_catalogo_imagenes_repetidas.png`: Catálogo de problem_user: imágenes repetidas y Backpack ya en el carrito (contador 1).
+
+  ![Catálogo de problem_user: imágenes repetidas y Backpack ya en el carrito (contador 1).](../evidencias/capturas/evidencia_TC006_01_catalogo_imagenes_repetidas.png)
+
+- `evidencia_TC006_02_agregar_tres_clics.png`: Tras 3 clics en Add to cart, Bolt y Fleece siguen sin cambiar.
+
+  ![Tras 3 clics en Add to cart, Bolt y Fleece siguen sin cambiar.](../evidencias/capturas/evidencia_TC006_02_agregar_tres_clics.png)
+
+- `evidencia_TC006_03_agregar_no_responde.png`: Onesie cambió a Remove; Bolt, Fleece y Test.allTheThings() T-Shirt (Red) siguen en Add to cart.
+
+  ![Onesie cambió a Remove; Bolt, Fleece y Test.allTheThings() T-Shirt (Red) siguen en Add to cart.](../evidencias/capturas/evidencia_TC006_03_agregar_no_responde.png)
+
+- `evidencia_TC006_04_remove_listado_no_responde.png`: Tras hacer clic en Remove, los botones del catálogo no cambian.
+
+  ![Tras hacer clic en Remove, los botones del catálogo no cambian.](../evidencias/capturas/evidencia_TC006_04_remove_listado_no_responde.png)
+
+- `evidencia_TC006_05_carrito_tres_items.png`: Carrito con 3 productos (Backpack, Bike Light y Onesie).
+
+  ![Carrito con 3 productos (Backpack, Bike Light y Onesie).](../evidencias/capturas/evidencia_TC006_05_carrito_tres_items.png)
+
+- `evidencia_TC006_06_remove_en_carrito_funciona.png`: Carrito tras eliminar el Backpack: quedan 2 productos y el contador baja a 2.
+
+  ![Carrito tras eliminar el Backpack: quedan 2 productos y el contador baja a 2.](../evidencias/capturas/evidencia_TC006_06_remove_en_carrito_funciona.png)
+
+**5. Si el resultado es FAIL**: Carrito heredado del usuario anterior; imágenes repetidas; Add to cart sin respuesta en 3 de 6 productos; Remove sin respuesta en el catálogo. Referencia del defecto: BUG-02-UI, BUG-03-F, BUG-04-F, BUG-06-F
+
+**6. Observaciones de ejecución**: El carrito heredado se confirmó con la sesión anterior (standard_user), que había dejado el Backpack en el carrito (ver TC-004).
+
+
+---
+
+## TC-007 · Checkout con datos válidos con problem_user (adicional)
+
+### Parte 1 · Diseño del caso de prueba
+
+| ID del TC | Título | Prioridad | Tipo | Módulo | Ambiente |
+|---|---|---|---|---|---|
+| TC-007 | Checkout con datos válidos con problem_user (adicional) | Alta | Funcional (exploratoria) | Checkout | Demo público (saucedemo.com), Chrome 155 / Windows |
+
+**1. Objetivo (¿Qué se quiere validar?)**: Que un usuario con nombre, apellido y código postal válidos pueda completar el formulario de información del checkout y avanzar al resumen.
+
+**2. Precondiciones**
+
+| Estado inicial | Sesión iniciada con problem_user. Carrito con Bike Light y Onesie, en /cart.html. |
+|---|---|
+| Usuario / permisos | problem_user (usuario de demostración con fallos intencionales). |
+| Configuración | Google Chrome 155 en Windows. |
+
+**3. Datos de prueba**
+
+| Dato | Nombre / Apellido / Código postal |
+|---|---|
+| Valor | Sebastian / Camacho / 0000 |
+| Origen | Generado (datos ficticios) |
+| Observación | Caso adicional a los 5 solicitados. |
+
+**4. Pasos y resultados esperados**
+
+| # | Paso / acción | Dato utilizado | Resultado esperado |
+|---|---|---|---|
+| 1 | Hacer clic en Checkout desde el carrito | — | Se muestra el formulario con First Name, Last Name y Zip/Postal Code vacíos. |
+| 2 | Escribir el nombre en First Name y el apellido en Last Name | Sebastian / Camacho | Cada campo muestra su valor. |
+| 3 | Escribir el código postal en Zip/Postal Code | 0000 | El campo muestra 0000. |
+| 4 | Hacer clic en Continue | — | Se abre el resumen de compra (Checkout: Overview). |
+
+**5. Resultado esperado final (criterio de éxito)**: Con los tres campos completos se avanza al resumen de compra sin errores.
+
+### Parte 2 · Ejecución de la prueba
+
+| ID del TC | Ejecutado por | Fecha | Hora | Ambiente | Versión |
+|---|---|---|---|---|---|
+| TC-007 | Sebastián Ariel Camacho Loayza | 20/10/2026 | 21:19 | Demo público (saucedemo.com), Chrome 155 / Windows | Sin versión visible (sitio de demostración) |
+
+**1. Resultado de la ejecución**: **FAIL**
+
+**2. Resultado observado**: Al escribir el apellido, el texto se ingresó en el campo First Name y lo sobrescribió: First Name quedó con “o” y Last Name vacío. Al presionar Continue apareció “Error: Last Name is required” y no se avanzó.
+
+**Comparación**: No coincide. El sistema no permite registrar el apellido y bloquea el checkout.
+
+**3. Registro de ejecución por paso**
+
+| # | Paso ejecutado | Resultado observado | Estado | Observación |
+|---|---|---|---|---|
+| 1 | Clic en Checkout | Formulario con campos vacíos | PASS | — |
+| 2 | Escribir nombre y apellido | First Name quedó con “o” y Last Name vacío | FAIL | BUG-05-F. Ver captura 01. |
+| 3 | Escribir código postal | Zip/Postal Code muestra 0000 | PASS | — |
+| 4 | Clic en Continue | Error: Last Name is required; no avanza | FAIL | BUG-05-F. Ver captura 02. |
+
+**4. Evidencia**
+
+- `evidencia_TC007_01_first_name_sobrescrito.png`: Formulario con First Name en “o”, Last Name vacío y Zip en 0000.
+
+  ![Formulario con First Name en “o”, Last Name vacío y Zip en 0000.](../evidencias/capturas/evidencia_TC007_01_first_name_sobrescrito.png)
+
+- `evidencia_TC007_02_last_name_required.png`: Error “Last Name is required” aunque el apellido fue escrito.
+
+  ![Error “Last Name is required” aunque el apellido fue escrito.](../evidencias/capturas/evidencia_TC007_02_last_name_required.png)
+
+**5. Si el resultado es FAIL**: Escribir en Last Name modifica First Name; Last Name queda vacío y no se puede completar el checkout. Referencia del defecto: BUG-05-F
+
+**6. Observaciones de ejecución**: Se verificó con JavaScript el valor de los campos: first=“o”, last=“”, zip=“0000”.
 
